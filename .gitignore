@@ -1,5 +1,8 @@
 .ipynb_checkpoints
 .vscode
-raw/
+*.npz
+mtg-jamendo/audio/
+openmic/features
+openmic/partitions
 venv/
 vggish/

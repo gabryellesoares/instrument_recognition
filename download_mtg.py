@@ -38,7 +38,7 @@ def download(output_dir):
 
     ids = sha256_tars.keys()
 
-    tracks_path = pd.read_table('mtg-jamendo/selected-instruments.csv')['path']
+    tracks_path = pd.read_csv('mtg-jamendo/selected-instruments.csv')['path']
 
     tracks_path = [path.replace(".", ".low.") for path in tracks_path]
 
