@@ -46,16 +46,13 @@ def get_segment(y, sr, segment, split_duration, duration):
     return y[start_sample:end_sample]
 
 
-def main(csv_file, audio_path, outfile):
+def process_data(csv_file, audio_path, outfile):
     df_jamendo = pd.read_csv(csv_file)
-    instruments = df_jamendo['instrument'].unique()
-    tracks = df_jamendo['track_id'].unique()
+    instruments = np.unique(df_jamendo['instrument'])
     inst_num = len(instruments)
-    songs_num = len(tracks)
 
     print('Extracting the vggish features...')
-    X = np.empty([songs_num*5, 10, 128], dtype=int)
-    count = 0
+    X = []
 
     new_dict = {'track_id': [], 'instrument': []}
 
@@ -73,8 +70,7 @@ def main(csv_file, audio_path, outfile):
             for i, idx in enumerate(subsampled_indices):
                 segment = segments[idx]
                 _, features = vggish.waveform_to_features(segment, sr)
-                X[count] = features
-                count += 1
+                X.append(features)
 
                 new_dict['track_id'].append(f'{row.track_id}_{i}')
                 new_dict['instrument'].append(row.instrument)
@@ -85,35 +81,30 @@ def main(csv_file, audio_path, outfile):
             continue
 
     new_df = pd.DataFrame(new_dict)
-    
-    tracks2 = new_df['track_id'].unique()
-    print(tracks == tracks2)
-    songs_num2 = len(tracks2)
-    print(songs_num == songs_num2)
-    print(songs_num)
-    print(songs_num2)
-    print(inst_num)
+    tracks = np.unique(new_df['track_id'])
+    songs_num = len(tracks)
+    Y_mask = np.zeros([songs_num, inst_num], dtype=bool)
 
-    print('Extracting the labels information...')
-    Y_mask = np.zeros([songs_num2, inst_num], dtype=bool)
+    print('Extracting the labels information...')    
 
     for _, row in new_df.iterrows():
-        x_pos = int(np.arange(songs_num2)[tracks2 == row.track_id])
+        x_pos = int(np.arange(songs_num)[tracks == row.track_id])
         y_pos = int(np.arange(inst_num)[instruments == row.instrument])
         Y_mask[x_pos, y_pos] = 1
 
+    print(len(X))
+    X = np.array(X)
     print(X.shape)
     print(Y_mask.shape)
-    print(len(tracks2))
+    print(len(tracks))
     
     print('Saving NPZ and CSV files...')
-    np.savez(outfile, X=X, Y_mask=Y_mask, track_id=tracks2)
+    np.savez(outfile, X=X, Y_mask=Y_mask, track_id=tracks)
     new_df.to_csv('mtg-jamendo/selected-instruments-splitted.csv', index=False)   
     print('Done.')
 
 
 def process_args(args):
-
     parser = argparse.ArgumentParser(
         description='VGGish to NumPy data generator')
 
@@ -134,4 +125,4 @@ if __name__ == '__main__':
         raise ValueError(
             "Both `--csv_file`, `--audio_path` and `--output_file` must be given.")
 
-    main(args.csv_file, args.audio_path, args.output_file)
+    process_data(args.csv_file, args.audio_path, args.output_file)
