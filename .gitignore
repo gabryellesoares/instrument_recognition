@@ -2,8 +2,11 @@
 .vscode
 *.npz
 *.pkl
-mtg-jamendo/audio/
+mtg-jamendo/audio/all
 openmic/features
 openmic/partitions
+nsynth/audio
+separated/demucs
 venv/
 vggish/
+tst.py
